@@ -40,8 +40,8 @@ public class MoneyLaundering {
     public void processTransactionData(int ini, int fin) {
         List<File> transactionFiles = getTransactionFileList();
         for (int i = ini; i < fin; i++) {
-            synchronized(amountOfFilesProcessed){
-                System.out.println(amountOfFilesTotal + " " + fin);
+            synchronized (amountOfFilesProcessed) {
+                //System.out.println(amountOfFilesTotal + " " + fin);
                 File transactionFile = transactionFiles.get(i);
                 List<Transaction> transactions = transactionReader.readTransactionsFromFile(transactionFile);
                 for (Transaction transaction : transactions) {
@@ -78,32 +78,54 @@ public class MoneyLaundering {
         MoneyLaundering moneyLaundering = new MoneyLaundering();
         int tamaño = moneyLaundering.getTransactionFileList().size();
         moneyLaundering.define();
+        List<Thread> hilos = new ArrayList<Thread>();
         Thread processingThread = new Thread(() -> moneyLaundering.processTransactionData(0, tamaño / 5));
-        Thread processingThread2 = new Thread(() -> moneyLaundering.processTransactionData(tamaño / 5, (tamaño*2)/5));
-        Thread processingThread3 = new Thread(() -> moneyLaundering.processTransactionData((tamaño*2)/5, (tamaño*3)/5));
-        Thread processingThread4 = new Thread(() ->  moneyLaundering.processTransactionData((tamaño*3)/5, (tamaño*4)/5));
-        Thread processingThread5 = new Thread(() -> moneyLaundering.processTransactionData((tamaño*4)/5, tamaño));
-    
+        hilos.add(processingThread);
+        Thread processingThread2 = new Thread(
+                () -> moneyLaundering.processTransactionData(tamaño / 5, (tamaño * 2) / 5));
+        hilos.add(processingThread2);
+        Thread processingThread3 = new Thread(
+                () -> moneyLaundering.processTransactionData((tamaño * 2) / 5, (tamaño * 3) / 5));
+        hilos.add(processingThread3);
+        Thread processingThread4 = new Thread(
+                () -> moneyLaundering.processTransactionData((tamaño * 3) / 5, (tamaño * 4) / 5));
+        hilos.add(processingThread4);
+        Thread processingThread5 = new Thread(() -> moneyLaundering.processTransactionData((tamaño * 4) / 5, tamaño));
+        hilos.add(processingThread5);
+
         processingThread.start();
         processingThread2.start();
         processingThread3.start();
         processingThread4.start();
         processingThread5.start();
-        while(true)
-        {
+        while (true) {
             Scanner scanner = new Scanner(System.in);
             String line = scanner.nextLine();
-            if(line.contains("exit"))
-            {
+            moneyLaundering.setPause(hilos);
+            if (line.contains("exit")) {
                 System.exit(0);
             }
 
             String message = "Processed %d out of %d files.\nFound %d suspect accounts:\n%s";
             List<String> offendingAccounts = moneyLaundering.getOffendingAccounts();
-            String suspectAccounts = offendingAccounts.stream().reduce("", (s1, s2)-> s1 + "\n"+s2);
-            message = String.format(message, moneyLaundering.amountOfFilesProcessed.get(), moneyLaundering.amountOfFilesTotal, offendingAccounts.size(), suspectAccounts);
+            String suspectAccounts = offendingAccounts.stream().reduce("", (s1, s2) -> s1 + "\n" + s2);
+            message = String.format(message, moneyLaundering.amountOfFilesProcessed.get(),
+                    moneyLaundering.amountOfFilesTotal, offendingAccounts.size(), suspectAccounts);
             System.out.println(message);
             line = scanner.nextLine();
+            moneyLaundering.setResume(hilos);
+        }
+    }
+
+    private void setPause(List<Thread> hilos) {
+        for (Thread h : hilos) {
+            h.suspend();
+        }
+    }
+
+    private void setResume(List<Thread> hilos) {
+        for (Thread h : hilos) {
+            h.resume();
         }
     }
 

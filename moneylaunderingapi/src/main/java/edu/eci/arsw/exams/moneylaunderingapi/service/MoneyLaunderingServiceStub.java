@@ -4,6 +4,10 @@ import edu.eci.arsw.exams.moneylaunderingapi.model.SuspectAccount;
 
 import java.util.List;
 
+import org.springframework.stereotype.Component;
+
+
+@Component
 public class MoneyLaunderingServiceStub implements MoneyLaunderingService {
     @Override
     public void updateAccountStatus(SuspectAccount suspectAccount) {
@@ -18,7 +22,12 @@ public class MoneyLaunderingServiceStub implements MoneyLaunderingService {
 
     @Override
     public List<SuspectAccount> getSuspectAccounts() {
-        //TODO
+        
+        return null;
+    }
+
+    @Override
+    public List<SuspectAccount> getSuspectAccount(String cuenta) {
         return null;
     }
 }
